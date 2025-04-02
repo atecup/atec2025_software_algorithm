@@ -97,8 +97,12 @@ class Rescue(UnrealCv_base):
         self.player_list = [self.player_list[self.protagonist_id]]
 
         #initialize start location
+        self.unrealcv.set_obj_rotation(self.player_list[self.protagonist_id], self.unrealcv.get_obj_rotation(self.injured_agent))
+        self.unrealcv.set_obj_location(self.player_list[self.protagonist_id], self.unrealcv.get_obj_location(self.injured_agent))
+        self.unrealcv.carry_body(self.player_list[self.protagonist_id])
+        time.sleep(1)
         self.unrealcv.drop_body(self.player_list[self.protagonist_id])
-
+        time.sleep(1)
         self.unrealcv.set_obj_rotation(self.player_list[self.protagonist_id], self.agent_pose[3:])
         self.unrealcv.set_obj_location(self.player_list[self.protagonist_id], self.agent_pose[:3])
         self.unrealcv.set_cam_fov(self.cam_list[self.protagonist_id],110)
@@ -115,7 +119,7 @@ class Rescue(UnrealCv_base):
         self.unrealcv.set_phy(self.ambulance, 1)
         self.unrealcv.set_obj_rotation(self.ambulance, self.ambulance_pose[3:])
         self.unrealcv.set_obj_location(self.ambulance, self.ambulance_pose[:3])
-        time.sleep(0.5)
+        time.sleep(1)
         self.unrealcv.set_phy(self.ambulance, 0)
         # self.unrealcv.init_mask_color(self.injured_agent)
         # self.unrealcv.check_visibility(self.cam_list[self.protagonist_id], self.injured_agent)
