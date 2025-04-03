@@ -2,6 +2,8 @@ ATEC_competition_demo_code_2025
 ===
 
 [//]: # (Gym-Rescue: )
+The completed demo, along with the dataset (Unreal Environment Binaries and example dataset in JSONL format), is available for download at [ATEC official website](https://www.atecup.cn/competitions/atec2025). Participants can register on the ATEC official website and download the required resources. 
+
 **This project integrates Unreal Engine with OpenAI Gym for a rescue task based on [UnrealCV](http://unrealcv.org/).**  
 
 # Introduction
