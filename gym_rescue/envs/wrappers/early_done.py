@@ -11,10 +11,11 @@ class EarlyDoneWrapper(Wrapper):
 
     def step(self, action):
         obs, reward, terminated, truncated, info = self.env.step(action)  # take a step in the wrapped environment
-
         elapsed_time = time.time() - self.start_time
         if elapsed_time > self.max_time:
             truncated = True
+        if action[0][2]==4:
+            truncated=True
         if terminated or truncated:
             info['execution_time'] = elapsed_time
             print('elapsed_time:', elapsed_time)

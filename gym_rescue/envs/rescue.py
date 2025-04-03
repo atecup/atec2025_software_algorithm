@@ -48,15 +48,14 @@ class Rescue(UnrealCv_base):
     def step(self, action):
         obs, reward, termination, truncation, info = super(Rescue, self).step(action)
         # compute the useful metrics for rewards and done condition
-        if info['picked']:
-            self.target_pose = self.rescue_pose
-            if self.first_picked is False: # the first time the agent pick the injured agent
-                reward = 0.5
-                self.first_picked = True
         current_pose = [self.unrealcv.get_cam_pose(self.cam_list[self.protagonist_id])]
         metrics = self.rescue_metrics(current_pose, self.target_pose)
-
         info['picked']=metrics['picked']
+        if info['picked']:
+            self.target_pose = self.rescue_pose
+            if self.first_picked is False:  # the first time the agent pick the injured agent
+                reward = 0.5
+                self.first_picked = True
 
         # done condition
         current_injured_player_pose = self.unrealcv.get_obj_location(self.injured_agent)+self.unrealcv.get_obj_rotation(self.injured_agent)

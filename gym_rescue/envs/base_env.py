@@ -133,7 +133,8 @@ class UnrealCv_base(gym.Env):
         move_cmds = [self.unrealcv.set_move_bp(obj, actions2move[i], return_cmd=True) for i, obj in enumerate(self.player_list) if actions2move[i] is not None]
         head_cmds = [self.unrealcv.set_cam(obj, self.agents[obj]['relative_location'], actions2turn[i], return_cmd=True) for i, obj in enumerate(self.player_list) if actions2turn[i] is not None]
         anim_cmds = [self.unrealcv.set_animation(obj, actions2animate[i], return_cmd=True) for i, obj in enumerate(self.player_list) if actions2animate[i] is not None]
-
+        if actions2animate[self.protagonist_id] == 'carry' or actions2animate[self.protagonist_id] == 'drop':
+            time.sleep(1)
         self.unrealcv.batch_cmd(move_cmds+head_cmds+anim_cmds, None)
         self.count_steps += 1
 
