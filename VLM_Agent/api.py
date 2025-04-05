@@ -47,7 +47,7 @@ def call_api_llm(prompt):
     url = "https://cloud.infini-ai.com/maas/qwen2.5-72b-instruct/nvidia/chat/completions"
     headers = {
         "Content-Type": "application/json",
-        "Authorization": f""  # 使用轮流的API密钥
+        "Authorization": f""
     }
 
     payload = {
@@ -57,7 +57,7 @@ def call_api_llm(prompt):
     }
 
     response = requests.post(url, headers=headers, json=payload, timeout=60)
-    response.raise_for_status()  # 检查请求是否成功
+    response.raise_for_status()
     response_json = response.json()
     response.close()
 

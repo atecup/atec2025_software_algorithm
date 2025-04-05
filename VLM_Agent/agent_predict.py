@@ -7,7 +7,6 @@ import gym
 import cv2
 import time
 import numpy as np
-# No environment wrappers needed in agent
 import base64
 from PIL import Image
 import io
