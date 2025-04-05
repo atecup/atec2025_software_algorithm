@@ -66,29 +66,4 @@ def call_api_llm(prompt):
 
 
 
-# def call_api_llm(prompt):
-
-#     input_messages = [
-#         {"role": "system", "content": "You are a helpful assistant."},
-#         {"role": "user", "content": prompt}
-#     ]
-
-#     url = "https://api.siliconflow.cn/v1/chat/completions"
-#     headers = {
-#         "Content-Type": "application/json",
-#         "Authorization": f"Bearer sk-mdybrmalhqgxobuzouluriezvvgiujmunoyihvhhrfvjtvrv"  # 使用轮流的API密钥
-#     }
-
-#     payload = {
-#         "model": 'Qwen/Qwen2.5-72B-Instruct',
-#         "messages": input_messages,
-#         "temperature": 0.6,
-#     }
-
-#     response = requests.post(url, headers=headers, json=payload, timeout=60)
-#     response.raise_for_status()  # 检查请求是否成功
-#     response_json = response.json()
-#     response.close()
-
-#     return response_json["choices"][0]["message"]["content"]
 
