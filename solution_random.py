@@ -6,16 +6,16 @@ class AlgSolution: # 类名不能变
         pass
 
     def reset(self, reference_text, reference_image):
-        # 每次进行新的测试数据推理，会先调用reset函数；
-        # reference_text和reference_image分别为该数据的参考文本和参考图像，如果为None则代表没有
-        # reference_image为base64编码的png图像
-        # 此函数完成一些状态初始化、缓存清空之类的功能
+        # This function is called before each new test data inference;
+        # reference_text and reference_image are the reference text and reference image for the data, respectively. If None, it means there is none.
+        # reference_image is a base64 encoded png image
+        # This function completes some state initialization, cache clearing, etc.
         pass
 
     def predicts(self, ob, success):
-        # ob: 以base64编码的png图像，分辨率为320*320，代表当前时刻的观测图像
-        # success：bool变量，True/False代表上一个指令执行成功/失败
-        # 大部分时候success都为True，当选手执行"carry"操作抬起伤员时，如果不在距离允许的范围内，该动作可能会失败
+        # ob: a base64 encoded png image with a resolution of 320*320, representing the current observation image
+        # success: a boolean variable, True/False represents whether the last command was successfully executed
+        # Most of the time, success is True. When the player performs the "carry" operation to lift the wounded, if it is not within the allowable distance, the action may fail.
 
         linear = random.randint(-100, 100)
         angular = random.randint(-30,30)

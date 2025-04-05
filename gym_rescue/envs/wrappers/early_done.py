@@ -14,7 +14,7 @@ class EarlyDoneWrapper(Wrapper):
         elapsed_time = time.time() - self.start_time
         if elapsed_time > self.max_time:
             truncated = True
-        if action[0][2]==4:
+        if action[0][2]==4: # if drop action is triggerd, the task is truncated
             truncated=True
         if terminated or truncated:
             info['execution_time'] = elapsed_time

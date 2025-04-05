@@ -12,7 +12,7 @@ from ultralytics import YOLO
 class AlgSolution:
 
     def __init__(self):
-        self.yolo_model = YOLO('checkpoints/yolo11x.pt')  # 'yolov8n.pt'是YOLOv8 nano版本的预训练模型文件名，根据实际情况替换
+        self.yolo_model = YOLO('checkpoints/yolo11x.pt')  #  'yolov8n.pt' is the pretrained model file name for YOLOv8 nano version, replace it according to the actual situation
         if os.path.exists('/home/admin/workspace/job/logs/'):
             self.handle = open('/home/admin/workspace/job/logs/user.log', 'w')
         else:
@@ -89,9 +89,9 @@ class AlgSolution:
         ob = base64.b64decode(ob)
         ob = cv2.imdecode(np.frombuffer(ob, np.uint8), cv2.IMREAD_COLOR)
         results = self.yolo_model(source=ob,imgsz=640,conf=0.1) 
-        boxes = results[0].boxes  # 获取所有检测框
+        boxes = results[0].boxes  # get all detected bounding box
         if boxes.shape[0] == 0:
-            # 从列表[1, 2]中随机选择一个数
+            # randomly choose a number from list[1,2]
             if self.right_times >= self.try_times:
                 if self.foreward_times<self.try_times:
                     action = self.foreward
@@ -130,9 +130,9 @@ class AlgSolution:
                 self.handle.flush()
                 return action
         for box in boxes:
-            cls = int(box.cls.item())  # 获取类别ID
+            cls = int(box.cls.item())  # get class ID
             if self.yolo_model.names[cls] == 'person' and self.person_success is False:  # 检查是否是person类别
-                # 获取边界框坐标（x1, y1, x2, y2）
+                # get bounding box coordinate（x1, y1, x2, y2）
                 #x0, y0, w_, h_ = box.xywh
                 res_ = box.xywh
                 self.handle.write("res_person: %s\n"%res_)
@@ -172,8 +172,8 @@ class AlgSolution:
                             self.handle.write(json.dumps(action) + '\n')
                             self.handle.flush()
                             return action
-            elif self.yolo_model.names[cls] == 'truck' and self.person_success:  # 检查是否是person类别
-                # 获取边界框坐标（x1, y1, x2, y2）
+            elif self.yolo_model.names[cls] == 'truck' and self.person_success:  #  Check if it is the 'person' category
+                # get bounding box coordinate（x1, y1, x2, y2）
                 #x0, y0, w_, h_ = box.xywh
                 res_ = box.xywh
                 self.handle.write("res_truck: %s\n"%res_)

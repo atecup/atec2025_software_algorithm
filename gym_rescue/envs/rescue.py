@@ -33,13 +33,6 @@ class Rescue(UnrealCv_base):
         self.stretcher=self.env_configs['stretcher'][0]
         self.ambulance = self.env_configs['ambulance'][0]
 
-        # self.rescue_pose = self.env_configs['stretcher_loc'][0]
-        # level_list = [l for l in self.env_configs.keys() if l.startswith('level')]
-        # assert len(level_list)>0
-        # self.injured_player_pose=self.env_configs[level_list[0]]['injured_player_loc'][reset_type]
-        # self.rescue_pose = self.env_configs[level_list[0]]['stretcher_loc'][reset_type]
-        # self.agent_pose = self.env_configs[level_list[0]]['agent_loc'][reset_type]
-        # self.ambulance_pose= self.env_configs[level_list[0]]['ambulance_loc'][reset_type]
         self.injured_player_pose = None
         self.rescue_pose = None
         self.agent_pose = None
