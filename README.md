@@ -6,6 +6,17 @@ Note that the Unreal Environment Binaries and example dataset in JSONL format ar
 
 **This project integrates Unreal Engine with OpenAI Gym for a rescue task based on [UnrealCV](http://unrealcv.org/).**  
 
+## 🔥 News
+
+- 04/05/2025. We released two additional baseline methods: **VLM-based** and **RL-based**. 
+  ```
+  # An example of implementing RL-based algorithm, user could try to improve it by modifying the reward function, integrating VFMs etc.  
+  python train_ppo.py --num_envs 4 --num_epochs 100000 --device cuda --num_steps 60 --test_jsonl test_L1.jsonl --gamma 0.99 --ppo_epochs 20 --clip_param 0.2
+  
+  # An example of implementing VLM-based method for zero-shot reasoning and action execution.
+  python Run_VLM_Agent.py
+  ```
+
 # Introduction
 
 **In this competition, the agent will be given image and text cues at the initial stage to help it respond to distress signals from an injured person in need of rescue. The agent must navigate a complex 3D environment, locate the objects, and transport them to designated stretchers as quickly as possible.**
