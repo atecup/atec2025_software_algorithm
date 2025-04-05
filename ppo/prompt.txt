@@ -1,0 +1,160 @@
+Please implement a PPO algorithm to solve this rescue mission problem.
+
+Here are  some detailed instrucitons:
+1. Implement actor and critic in a file named model. The actor needs to have 2 major functions: get action and evaluate action. Get action is used for generating action that interacts with the environment. Evaluate action is used for calculating logprob of the action, which is differentiable, and used for ppo update. Critic calculates the value of the state, which is also differentiable. Meanwhile, the input is image, so you need to implement another model named CNN to first convert image to feature vector for actor. Actor can only see the image, while critic uses a state vector as input. The state vector is concatenated by another CNN's output as well as some other features I will provide later.
+
+2. Implement a PPO algorithm in a file named ppo.py. It has one major function: pg_loss. It receives array buffers: share_obs (used by critic), obs (used by actor), return, actions, old_log_probs (used for calculating ppo loss) and masks (used for knowing that which point environment is done). It will first calculate advantage using gamma and gae_lambda in an arg varialble. Then it calls evaluate_action to get logprob of the current model which is differentiable. Then it calculates the ppo's cliped loss using the advantage, old_log_probs, and the logprob calculated by evaluate_action. Then calculate the value loss using MSE.
+
+Here is the code of PPO for my another project, you can refer to it (but may need to write a completely different code because the requirements are different):
+```
+    def ppo_update(self, sample, update_actor=True):
+        """
+        Update actor and critic networks.
+        :param sample: (Tuple) contains data batch with which to update networks.
+        :update_actor: (bool) whether to update actor network.
+
+        :return value_loss: (torch.Tensor) value function loss.
+        :return critic_grad_norm: (torch.Tensor) gradient norm from critic up9date.
+        ;return policy_loss: (torch.Tensor) actor(policy) loss value.
+        :return dist_entropy: (torch.Tensor) action entropies.
+        :return actor_grad_norm: (torch.Tensor) gradient norm from actor update.
+        :return imp_weights: (torch.Tensor) importance sampling weights.
+        """
+        share_obs_batch, obs_batch, rnn_states_batch, rnn_states_critic_batch, actions_batch, \
+        value_preds_batch, return_batch, masks_batch, active_masks_batch, old_action_log_probs_batch, \
+        adv_targ, available_actions_batch = sample
+
+        old_action_log_probs_batch = check(old_action_log_probs_batch).to(**self.tpdv)
+        adv_targ = check(adv_targ).to(**self.tpdv)
+        value_preds_batch = check(value_preds_batch).to(**self.tpdv)
+        return_batch = check(return_batch).to(**self.tpdv)
+        active_masks_batch = check(active_masks_batch).to(**self.tpdv)
+
+        # Reshape to do in a single forward pass for all steps
+        values, action_log_probs, dist_entropy = self.policy.evaluate_actions(share_obs_batch,
+                                                                              obs_batch, 
+                                                                              rnn_states_batch, 
+                                                                              rnn_states_critic_batch, 
+                                                                              actions_batch, 
+                                                                              masks_batch, 
+                                                                              available_actions_batch,
+                                                                              active_masks_batch)
+        # actor update
+        # print("[DEBUG] action_log_probs", action_log_probs.shape, old_action_log_probs_batch.shape, flush=True)
+        imp_weights = torch.exp(action_log_probs - old_action_log_probs_batch)
+
+        surr1 = imp_weights * adv_targ
+        surr2 = torch.clamp(imp_weights, 1.0 - self.clip_param, 1.0 + self.clip_param) * adv_targ
+        # debug_print(self._use_policy_active_masks, torch.sum(torch.min(surr1, surr2),
+                                            #  dim=-1,
+                                            #  keepdim=True).shape, active_masks_batch.shape)
+
+        if self._use_policy_active_masks:
+            policy_action_loss = (-torch.sum(torch.min(surr1, surr2),
+                                             dim=-1,
+                                             keepdim=True) * active_masks_batch).sum() / active_masks_batch.sum()
+        else:
+            policy_action_loss = -torch.sum(torch.min(surr1, surr2), dim=-1, keepdim=True).mean()
+
+
+        policy_loss = policy_action_loss
+
+        self.policy.actor_optimizer.zero_grad()
+        (policy_loss - dist_entropy * self.entropy_coef).backward()
+        
+        actor_grad_norm = torch.tensor(0.0)
+        
+        if update_actor:
+            # print(policy_loss,dist_entropy,self.entropy_coef)
+            # debug_print(dist_entropy)
+            # exit()
+            if self._use_max_grad_norm:
+                actor_grad_norm = nn.utils.clip_grad_norm_(self.policy.actor.parameters(), self.max_grad_norm)
+            else:
+                actor_grad_norm = get_gard_norm(self.policy.actor.parameters())
+
+            self.policy.actor_optimizer.step()
+
+        # critic update
+        value_loss = self.cal_value_loss(values, value_preds_batch, return_batch, active_masks_batch)
+
+        self.policy.critic_optimizer.zero_grad()
+
+        (value_loss * self.value_loss_coef).backward()
+
+        if self._use_max_grad_norm:
+            critic_grad_norm = nn.utils.clip_grad_norm_(self.policy.critic.parameters(), self.max_grad_norm)
+        else:
+            critic_grad_norm = get_gard_norm(self.policy.critic.parameters())
+
+        self.policy.critic_optimizer.step()
+
+        return value_loss, critic_grad_norm, policy_loss, dist_entropy, actor_grad_norm, imp_weights
+```
+
+3. Write a script named runner.py that runs rollout, stores information into the buffer used by pg_loss, and then calls pg_loss to update the model. You should write another script called multi_process_wrapper, which  creates a virtual environment that has multiple real environments. Here's  another reference:
+```
+class SubprocVecEnv(ShareVecEnv):
+    def __init__(self, env_fns, spaces=None, id = 0):
+        """
+        envs: list of gym environments to run in subprocesses
+        """
+        self.waiting = False
+        self.closed = False
+        nenvs = len(env_fns)
+        self.remotes, self.work_remotes = zip(*[Pipe() for _ in range(nenvs)])
+        
+        # cpus = range(nenvs)
+        # available_cpus = list(range(os.cpu_count()))
+        cpu_usages = psutil.cpu_percent(percpu=True)
+        # least_used_cpus = list(range(len(cpu_usages)))
+        least_used_cpus = sorted(range(len(cpu_usages)), key=lambda i: cpu_usages[i])
+        p_tmp = psutil.Process(os.getpid())
+        available_cpus = []
+        for i in least_used_cpus:
+            try:
+                p_tmp.cpu_affinity([i])
+                available_cpus.append(i)
+                print(i, end=' ')
+            except Exception as e:
+                pass
+        least_used_cpus = available_cpus
+        # sep = (id * nenvs) % len(least_used_cpus)
+        # least_used_cpus = least_used_cpus[sep:] + least_used_cpus[:sep]
+        self.ps = [
+            Process(target=worker_with_affinity, args=(work_remote, remote, CloudpickleWrapper(env_fn)), kwargs={'cpu': cpu})
+            for (work_remote, remote, env_fn, cpu) in zip(self.work_remotes, self.remotes, env_fns, least_used_cpus * 10)
+        ]
+        # self.ps = [Process(target=worker, args=(work_remote, remote, CloudpickleWrapper(env_fn)))
+        #            for (work_remote, remote, env_fn) in zip(self.work_remotes, self.remotes, env_fns)]
+        for p in self.ps:
+            p.daemon = True  # if the main process crashes, we should not cause things to hang
+            p.start()
+        for remote in self.work_remotes:
+            remote.close()
+
+        self.remotes[0].send(('get_spaces', None))
+        observation_space, share_observation_space, action_space = self.remotes[0].recv()
+        ShareVecEnv.__init__(self, len(env_fns), observation_space,
+                             share_observation_space, action_space)
+
+    def step_async(self, actions):
+        for remote, action in zip(self.remotes, actions):
+            remote.send(('step', action))
+        self.waiting = True
+
+    def step_wait(self):
+        results = [remote.recv() for remote in self.remotes]
+        self.waiting = False
+        obs, rews, dones, infos = zip(*results)
+        return np.stack(obs), np.stack(rews), np.stack(dones), infos
+
+    def reset(self):
+        for remote in self.remotes:
+            remote.send(('reset', None))
+        obs = [remote.recv() for remote in self.remotes]
+        return np.stack(obs)
+```
+
+However, in this project, the environment is real time, meaning no need to step wait. Refer to main.py for environment interaction details.
+
