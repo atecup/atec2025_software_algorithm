@@ -170,38 +170,3 @@ def worker_with_affinity(remote, parent_remote, env_fn_wrapper, cpu=None):
                 raise NotImplementedError(f"Unknown command {cmd}")
         except EOFError:
             break
-
-# def make_env(env_configs, env_idx):
-#     def _init():
-#         # Get config for this environment instance
-#         config = env_configs[env_idx % len(env_configs)]
-        
-#         # Create the environment
-#         env = gym.make(
-#             config['env_id'],
-#             action_type='Mixed',
-#             observation_type='Color',
-#             reset_type=config['level']
-#         )
-        
-#         # Set max steps from config
-#         env._max_episode_steps = config['max_steps']
-        
-#         # Add UE wrapper with offscreen rendering and resolution
-#         env = configUE.ConfigUEWrapper(
-#             offscreen=True,
-#             resolution=(640, 480)
-#         )
-        
-#         # Store config in env for use during reset
-#         env.config = config
-        
-#         # Set specific locations if provided in config
-#         if hasattr(env.unwrapped, 'rescue_pose') and 'stretcher_loc' in config:
-#             env.unwrapped.rescue_pose = config['stretcher_loc']
-            
-#         if hasattr(env.unwrapped, 'injured_player_pose') and 'injured_player_loc' in config:
-#             env.unwrapped.injured_player_pose = config['injured_player_loc']
-            
-#         return env
-#     return _init 
