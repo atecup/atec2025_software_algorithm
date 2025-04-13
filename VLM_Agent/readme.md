@@ -1,9 +1,9 @@
-# Hybrid YOLO-VLM Rescue Agent README
+# Hybrid YOLO-VLM Rescue Agent
 
 ## Overview
 This agent is designed to solve rescue missions in a simulated environment by combining object detection (YOLO) and vision-language models (VLM) to create a two-tiered decision system. The agent navigates through the environment, finds an injured person, and transports them to a stretcher or ambulance.
 
-The agent successfully completes rescue tasks by implementing a hybrid approach:
+The agent completes rescue tasks by implementing a hybrid approach:
 1. **Primary Tier: YOLO Detection** - Provides precise object detection and movement when targets are clearly visible
 2. **Secondary Tier: VLM Landmark Navigation** - Takes over when YOLO detection fails, using contextual understanding to search for landmarks
 
@@ -14,7 +14,7 @@ The system consists of several specialized modules that work together:
 ### Main Components
 - **solution_VLM.py**: The main agent program that contains:
   - YOLO detection logic and movement control
-  - Initialization of the VLM agent
+  - The initialization of the VLM agent
   - Decision logic for switching between YOLO and VLM approaches
   - Overall state management and action coordination
 
@@ -43,7 +43,7 @@ The system consists of several specialized modules that work together:
 4. If detection fails, control passes to **agent_VLM.py**
 5. VLM agent uses **prompt_yoloVLM.py** to formulate queries
 6. Queries are sent via **api_yoloVLM.py** to get navigation decisions
-7. Results are processed and actions are returned to the environment
+7. Results are processed, and actions are returned to the environment
 
 ## System Architecture
 
@@ -57,8 +57,8 @@ The agent implements a hierarchical decision-making process:
 
 2. **VLM Landmark Navigation (Secondary)**
    - Activates when YOLO fails to detect relevant objects
-   - Analyzes textual clues and visual environment
-   - Uses landmark-based navigation to systematically search the environment
+   - Analyze textual clues and visual environment
+   - Uses landmark-based navigation to search the environment systematically
 
 ### YOLO Detection System
 - **Object Detection**: Uses YOLO model to detect persons, stretchers (suitcases), trucks, and buses with confidence thresholds
@@ -69,7 +69,7 @@ The agent implements a hierarchical decision-making process:
 - **State Tracking**: Maintains state of rescue operation (whether person has been picked up)
 
 ### Landmark-Based Navigation (VLM)
-The agent parses the initial text clue to identify potential landmarks that might lead to the injured person. For example, if the clue is "The injured person is by the roadside garbage bin, and there is a car nearby," landmarks might include [roadside, car, garbage bin, injured person]. The agent will detect them in priority order and move towards them.
+The agent parses the initial text clue to identify potential landmarks that might lead to the injured person. For example, if the clue is "The injured person is by the roadside garbage bin, and there is a car nearby," landmarks might include [roadside, car, garbage bin, injured person]. The agent will detect them in priority order and move toward them.
 
 ### Action and Observation Buffers
 - **Action Buffer**: Maintains a queue of pending actions to be executed, allowing the agent to plan multiple steps ahead.
@@ -101,8 +101,8 @@ These two buffers allow the VLM to perform continuous action control on the agen
    - If key objects are detected, precise movement actions are calculated based on their position.
    - If no relevant objects are detected, control passes to the VLM system.
 3. The VLM system manages search, rescue, return, and placement phases:
-   - Analyzes surroundings to locate landmarks from the clue
-   - Moves toward identified landmarks
-   - Picks up the injured person when found
-   - Searches for the stretcher/ambulance
-   - Places the injured person on the stretcher
+   - Analyzing surroundings to locate landmarks from the clue
+   - Moving toward identified landmarks
+   - Picking up the injured person when found
+   - Searching for the stretcher/ambulance
+   - Placing the injured person on the stretcher
