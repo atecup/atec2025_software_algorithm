@@ -8,7 +8,7 @@ import numpy as np
 from gym_rescue.envs.wrappers import time_dilation, early_done, monitor, configUE,task_cue
 import os
 import json
-from VLM_Agent.agent_predict import agent
+from VLM_Agent.solution_yoloVLM import AlgSolution
 
 
 
@@ -70,8 +70,8 @@ if __name__ == '__main__':
                 obs, info = env.reset()  # environment reset
                 count_step = 0
                 t0 = time.time()
-                Ag = agent()
-                Ag.clue=info['reference_text']
+                Ag = AlgSolution()
+                Ag.reset(info['reference_text'], info['reference_image'])
                 while True:
                     try:
                         action = Ag.predict(obs, info)
