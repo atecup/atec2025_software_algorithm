@@ -1,0 +1,7 @@
+numpy==2.2.4
+opencv_python==4.11.0.86
+Pillow==11.2.1
+Requests==2.32.3
+torch==2.4.0+cu124
+ultralytics==8.3.107
+ollama
