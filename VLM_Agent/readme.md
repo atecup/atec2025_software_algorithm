@@ -27,6 +27,7 @@ pip install -r requirements.txt
 ```bash
 ollama pull gemma3:27b
 ```
+You can then use solution_yoloVLM.py as the solution.py required to complete the full task.
 
 
 ## System Architecture
