@@ -1,19 +1,20 @@
+
 def initial_clue_prompt(clue):
     p = f"""
         You are a rescue robot, and now you have the following initial prompts about the rescue target:
-        {clue}
+        Clue: {clue}
 
         Please analyze two major questions:
         1. Does the prompt mention where the first target is located on the robot? (Front, right side, etc.)
         2. What objects or symbols are mentioned in the prompt? According to the logical description of the prompt, arrange the mentioned landmark objects as nodes in the order from the starting point (away from the injured person) to the ending point (injured person).
-        
+
         Output format with XML tags:
         <a> Your step-by-step think process </a>
         <b>first target's direction (front/back/left/right/none)</b>
         <c>Sorted landmark objects<c>
 
         Example:
-        Tip: The injured person is under a fruit tree. After the fruit tree enters the orchard, turn left. There is a fence outside the orchard and a car is parked.
+        Clue: The injured person is under a fruit tree. After the fruit tree enters the orchard, turn left. There is a fence outside the orchard and a car is parked.
         <a> (think process) </a>
         <b>front</b>
         <c>car,fence,orchard entrance,fruit tree,injured person</c>
@@ -24,8 +25,60 @@ def initial_clue_prompt(clue):
 
 
 
+def initial_clue_prompt_indoor(clue):
+    p = f"""
+        You are a rescue robot, and now you have the following initial prompts about the rescue target:
+        Clue: {clue}
 
-def search_prompt(landmark_list):
+        Please analyze two major questions:
+        1. Does the prompt mention where the first target is located on the robot? (Front, right side, etc.)
+        2. What objects or symbols are mentioned in the prompt? According to the logical description of the prompt, arrange the mentioned landmark objects as nodes in the order from the starting point (away from the injured person) to the ending point (injured person).
+        - Attention, you already know that the injured person is indoors, so the node must include a "door".
+        Output format with XML tags:
+        <a> Your step-by-step think process </a>
+        <b>first target's direction (front/back/left/right/none)</b>
+        <c>Sorted landmark objects<c>
+
+        Example:
+        Clue: The injured person is under a fruit tree. After the fruit tree enters the orchard, turn left. There is a fence outside the orchard and a car is parked.
+        <a> (think process) </a>
+        <b>front</b>
+        <c>car,fence,orchard entrance,fruit tree,injured person</c>
+
+
+    """
+    return p
+
+
+
+def in_out_door_prompt(clue):
+    p = f"""
+    Here are clue about the target:
+    {clue}
+    and you will get the image of the target.
+    Please determine whether the target is indoors or outdoors based on this text. 
+    If indoors, please return 0; If outdoors, please return to 1. 
+    Do not provide any additional responses.
+
+    """
+    return p
+
+def initial_image_prompt():
+    p = f"""
+    Please detect the human lying on the ground in the picture and output the color of the clothes they are wearing.
+    Please only output colors and do not include any other explanatory text.
+    Example 1 (correct):
+    Blue and white
+    Example 2 (incorrect, as only color output is allowed):
+    The color of the clothes passed on by this person is blue and white
+    """
+    return p
+
+
+
+
+
+def search_prompt(landmark_list, person_text):
 
     landmark_str = ", ".join(landmark_list)
 
@@ -36,12 +89,14 @@ def search_prompt(landmark_list):
         The input RGB image is a concatenation of three images, reflecting the robot's field of view on the left, front, and right sides, respectively.
 
         You now have a list of landmarks:[{landmark_str}]
-        the list was sort in descending order of priority.
+        the list was sort in descending order of priority. 
 
         Please complete the following tasks:
         1. Please analyze the information and objects contained in each image separately;
         2. Check if the objects in the list appear within the field of view.
-        
+
+        If your target is an Injured person, please note that they are human beings lying on the ground and the color of their clothes is {person_text}.
+
 
         Use XML tags to output results in the following format:
         <a>Check whether the objects in the list appear in order based on the information within the field of view</a>
@@ -60,7 +115,7 @@ def search_prompt(landmark_list):
 
 
 
-def search_prompt_begin(landmark_list):
+def search_prompt_begin(landmark_list, person_text):
 
     landmark_str = ", ".join(landmark_list)
 
@@ -91,7 +146,7 @@ def search_prompt_begin(landmark_list):
 
 
 
-def search_prompt_back(landmark_list):
+def search_prompt_back(landmark_list, person_text):
 
     landmark_str = ", ".join(landmark_list)
 
@@ -100,7 +155,7 @@ def search_prompt_back(landmark_list):
         You are a rescue robot, you need to find the wounded.
 
         The input RGB image is a concatenation of four images, reflecting the robot's field of view on the front, right ,back and left sides, respectively.
-        
+
         You need to find the stretcher within your field of view (if it exists). Stretchers will always appear next to the ambulance, so when you cannot see the stretcher, you should output the ambulance.
 
         Please complete the following tasks:
@@ -123,7 +178,7 @@ def search_prompt_back(landmark_list):
     return p
 
 
-def move_forward_prompt(target):
+def move_forward_prompt(target, person_text):
     p = f"""
 
 You are a rescue robot, you need to find the wounded.
@@ -132,6 +187,8 @@ The input RGB image now displays the visual field in front of the robot. You are
 The image is divided into three parts by two red vertical lines: left, middle, right. Please identify the following issue:
 1. Is the target still within sight?
 2. Is the target mainly located on the left, middle, or right side of the image?
+
+If your target is an Injured person, please note that they are human beings lying on the ground and the color of their clothes is {person_text}.
 
 Use XML tags to output results in the following format:
 <a>yes/no (Determine if the target is still within the field of view)</a>
@@ -199,7 +256,7 @@ def access_search_prompt():
 
     """
 
-    return p 
+    return p
 
 
 
@@ -221,4 +278,49 @@ def move_obstacle_prompt():
         <b>There is a white fence in front of me</b>
 
         """
+    return p
+
+def moving_suggestion(clue):
+    p = f"""
+    You are assisting a robot in locating an injured person lying on the ground. Your task is to provide a **moving direction suggestion** based on the **text clue**, the robot's **current visual observation**, and a **scratch trajectory image** that aids spatial reasoning.
+
+    ## Inputs:
+    1. **Text Clue**: {clue}
+    2. **Robot’s Observation Sequence**: A concatenation of RGB images representing the robot's recent first-person views.
+    3. **Trajectory Image**: A top-down sketch of the robot’s movement history. The **green point** marks the starting location, the **red point** marks the current position, and the **upward direction** represents the robot’s initial orientation. The robot has **no memory** of previously visited paths, so this image is crucial for reasoning.
+
+    ## Your Task:
+    Analyze the text clue, image observations, and the trajectory to determine which direction the robot should move in next.
+
+    ## Output Format:
+    Provide your suggestion using the following XML format:
+    <a>YOUR_SUGGESTION</a>
+    (Choose from: front, right, back, left, jump)
+
+    ## Example Output:
+    <a>front</a>
+    """
+    return p
+
+
+
+def moving_back_suggestion():
+    p = f"""
+    You are helping a robot to finding the yellow stretcher beside a ambulance car, your task is to give a moving direction suggestion, considering the robot's observations.
+
+    #Input
+    1. Robot's observation sequence: The input RGB image is a concatenation of robot's continuous observation
+
+    Please analyze the robot's observations to determine the direction the robot should explore.
+    **Considering Strategy**
+    1. First determine if the ambulance car is visible in the current view, if not, turn around to explore.
+    2. The ambulance car generally are parking near a large free area, like middle of the road, so avoid moving toward area with clutter structures or buildings.
+    
+    Please output according to the format, including XML tags:
+        <a>The moving suggestion</a> (Select from front, right, back, left)</c>
+    
+    Example:
+    <a>front</a>
+
+    """
     return p

@@ -1,95 +1,108 @@
-# Landmark Agent README
+# Hybrid YOLO-VLM Rescue Agent README
 
 ## Overview
+This agent is designed to solve rescue missions in a simulated environment by combining object detection (YOLO) and vision-language models (VLM) to create a two-tiered decision system. The agent navigates through the environment, finds an injured person, and transports them to a stretcher or ambulance.
 
-This agent is designed to solve rescue missions in a simulated environment by analyzing textual clues and using vision-language models (VLM) to navigate through the environment, find an injured person, and transport them to a stretcher or ambulance.
+The agent successfully completes rescue tasks by implementing a hybrid approach:
+1. **Primary Tier: YOLO Detection** - Provides precise object detection and movement when targets are clearly visible
+2. **Secondary Tier: VLM Landmark Navigation** - Takes over when YOLO detection fails, using contextual understanding to search for landmarks
 
-The agent successfully completes rescue tasks on some test scenarios by implementing a landmark-based navigation approach. It analyzes initial clues to determine potential landmarks and uses vision-language models to identify and navigate towards these landmarks until it finds the injured person and eventually the stretcher/ambulance.
+## File Structure and Components
 
+The system consists of several specialized modules that work together:
 
-## Discussion
+### Main Components
+- **solution_VLM.py**: The main agent program that contains:
+  - YOLO detection logic and movement control
+  - Initialization of the VLM agent
+  - Decision logic for switching between YOLO and VLM approaches
+  - Overall state management and action coordination
 
-### Landmark-Based Navigation
-The agent parses the initial text clue to identify potential landmarks that might lead to the injured person. 
-For example, the clue is "The injured person is by the roadside garbage bin, and there is a car nearby."
-then landmarks can be [roadside, car, garbage bin, injured person]. The agent will detect them in priority order and move towards them, ultimately finding the injured person.
+- **agent_VLM.py**: Implements the landmark-based navigation logic:
+  - Buffer management for actions and observations
+  - Phase handling (search, rescue, return, placement)
+  - Processing of search results and movement outcomes
+  - Analysis of initial clues and images
 
+### Support Modules
+- **api_yoloVLM.py**: Handles all API interactions:
+  - Communication with vision-language model APIs
+  - Image encoding and formatting for API submission
+  - Response parsing and error handling
+
+- **prompt_yoloVLM.py**: Contains all prompts for VLM interactions:
+  - Initial clue analysis prompts
+  - Search prompts for different phases
+  - Movement guidance prompts
+  - Obstacle detection prompts
+
+### Interaction Flow
+1. **solution_VLM.py** receives observations and initializes components
+2. YOLO detection is attempted first to identify objects
+3. If detection succeeds, direct movement logic is applied
+4. If detection fails, control passes to **agent_VLM.py**
+5. VLM agent uses **prompt_yoloVLM.py** to formulate queries
+6. Queries are sent via **api_yoloVLM.py** to get navigation decisions
+7. Results are processed and actions are returned to the environment
+
+## System Architecture
+
+### Two-Tier Decision System
+The agent implements a hierarchical decision-making process:
+
+1. **YOLO Object Detection (Primary)**
+   - Runs first on each frame to detect key objects (person, stretcher, truck/ambulance)
+   - Provides precise positioning and movement when objects are detected
+   - Handles direct movement control with defined thresholds for actions
+
+2. **VLM Landmark Navigation (Secondary)**
+   - Activates when YOLO fails to detect relevant objects
+   - Analyzes textual clues and visual environment
+   - Uses landmark-based navigation to systematically search the environment
+
+### YOLO Detection System
+- **Object Detection**: Uses YOLO model to detect persons, stretchers (suitcases), trucks, and buses with confidence thresholds
+- **Precision Control**: 
+  - Divides screen into navigation zones (left, center, right)
+  - Uses object coordinates to determine optimal movement action
+  - Implements proximity thresholds for pickup and drop actions
+- **State Tracking**: Maintains state of rescue operation (whether person has been picked up)
+
+### Landmark-Based Navigation (VLM)
+The agent parses the initial text clue to identify potential landmarks that might lead to the injured person. For example, if the clue is "The injured person is by the roadside garbage bin, and there is a car nearby," landmarks might include [roadside, car, garbage bin, injured person]. The agent will detect them in priority order and move towards them.
 
 ### Action and Observation Buffers
 - **Action Buffer**: Maintains a queue of pending actions to be executed, allowing the agent to plan multiple steps ahead.
 - **Observation Buffer**: Coordinates with the action buffer to determine which observations should be saved for later analysis.
+
 These two buffers allow the VLM to perform continuous action control on the agent during the loop process.
 
+## Technical Implementation Details
 
-### Some Details
+### YOLO Detection Logic
+- **Confidence Thresholds**: Adapts confidence level based on whether a person has been picked up (0.1 when carrying, 0.2 when searching)
+- **Object Prioritization**: Hierarchical detection logic that prioritizes persons when searching and stretcher/vehicles when carrying
+- **Position-Based Actions**:
+  - Central region (220-420 px): Move forward
+  - Left region (<220 px): Turn left
+  - Right region (>420 px): Turn right
+  - Proximity triggers (y-coordinate thresholds): Initiate carry/drop actions
 
-1. **Obstacle Avoidance**: The agent alternates between walking and jumping to navigate around obstacles when searching for the injured person.
+### VLM Navigation Features
+- **Obstacle Avoidance**: The agent alternates between walking and jumping to navigate around obstacles when searching.
+- **Repeated Pickup Attempts**: After finding the target person, the agent attempts to pick them up after each move.
+- **Optimal Placement Distance**: When placing the injured person on the stretcher, the agent backs up before dropping.
+- **Multi-Directional Observation**: The agent captures images from multiple directions and concatenates them.
+- **Visual Guidance Lines**: When moving forward, the agent divides the image into regions using vertical lines.
 
-2. **Repeated Pickup Attempts**: After finding the target person, the agent attempts to pick them up after each move to compensate for the limited precision of VLM-based control.
-
-3. **Optimal Placement Distance**: When placing the injured person on the stretcher, the agent backs up two steps before dropping, which has proven to be an appropriate distance.
-
-4. **Multi-Directional Observation**: The agent captures images from multiple directions and concatenates them to provide the VLM with a comprehensive view of the surroundings.
-
-5. **Visual Guidance Lines**: When moving forward, the agent divides the image into left, middle, and right regions using vertical lines to help the VLM better control direction.
-
-## Limitations
-
-1. **Limited Use of Visual Clues**: The agent primarily relies on textual clues and doesn't fully utilize visual information that might be present in the environment.
-
-2. **Poor Performance on Long-Distance Tasks**: The agent struggles with missions requiring long-distance travel because:
-   - Landmarks cannot be effectively deployed as a VLM-detectable continuous route
-   - The current structure involves many small movement steps rather than efficient long strides
-
-3. **Primitive Obstacle Avoidance**: When blocked, the agent uses a simple random movement strategy (left-forward or right-forward) rather than intelligent path planning.
-
-4. **VLM Hallucination Issues**: The agent occasionally suffers from VLM hallucinations, particularly with smaller models, which can lead to navigation errors and inefficiencies.
-
-## Code Structure and Flow
-
-### Main Components
-
-1. **Initialization** (`__init__`): Sets up the agent state, buffers, and tracking variables.
-
-2. **Prediction Loop** (`predict`): The main function called by the environment that:
-   - Processes current observations
-   - Selects the next action based on the current phase
-   - Manages the transition between different phases of the rescue mission
-
-3. **Phase Handlers**:
-   - `_handle_initial_phase`: Analyzes the clue and initializes search
-   - `_handle_search_phase`: Searches for and moves toward the injured person
-   - `_handle_rescue_phase`: Picks up the injured person
-   - `_handle_return_phase`: Searches for the stretcher/ambulance
-   - `_handle_placement_phase`: Places the person on the stretcher
-
-4. **Action Processors**:
-   - `_start_search`: Initiates a search by rotating and observing in different directions
-   - `_start_move_to_landmark`: Begins movement toward an identified landmark
-   - `_process_search_result`: Analyzes collected observations to find landmarks
-   - `_process_move_result`: Determines if movement toward a landmark was successful
-
-5. **Utility Functions**:
-   - `analyse_initial_clue`: Parses the initial textual clue to extract directions and landmarks
-   - `encode_image_array`: Converts image arrays to base64 for API calls
-   - `concatenate_images`: Combines multiple observation images
-   - `add_vertical_lines`: Adds guidance lines to images for movement control
-
-### Execution Flow
-
-1. The agent starts by analyzing the initial clue to identify potential landmarks and direction.
-2. It enters the search phase, rotating to observe the surroundings and using VLM to identify landmarks.
-3. Upon finding a landmark, it moves toward it while continuously checking if the injured person is visible.
-4. After finding and picking up the injured person, it transitions to the return phase.
-5. In the return phase, it searches for the stretcher/ambulance.
-6. Finally, in the placement phase, it approaches the stretcher and places the injured person on it.
-
-Throughout this process, the agent uses the action and observation buffers to queue up sequences of actions, making the control more efficient and reducing the number of API calls needed.
-
-## Potential Improvements
-
-1. Incorporate visual clue analysis to supplement textual landmark information
-2. Implement more sophisticated path planning for long-distance navigation
-3. Develop better obstacle avoidance strategies using reinforcement learning
-4. Add confidence scoring to VLM outputs to reduce the impact of hallucinations
-5. Optimize the movement patterns to reduce the number of steps needed for navigation
+## Execution Flow
+1. The agent initializes and processes the initial clue.
+2. On each frame, YOLO detection is attempted first:
+   - If key objects are detected, precise movement actions are calculated based on their position.
+   - If no relevant objects are detected, control passes to the VLM system.
+3. The VLM system manages search, rescue, return, and placement phases:
+   - Analyzes surroundings to locate landmarks from the clue
+   - Moves toward identified landmarks
+   - Picks up the injured person when found
+   - Searches for the stretcher/ambulance
+   - Places the injured person on the stretcher
