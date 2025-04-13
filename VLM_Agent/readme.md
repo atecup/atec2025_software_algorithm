@@ -7,6 +7,44 @@ The agent successfully completes rescue tasks by implementing a hybrid approach:
 1. **Primary Tier: YOLO Detection** - Provides precise object detection and movement when targets are clearly visible
 2. **Secondary Tier: VLM Landmark Navigation** - Takes over when YOLO detection fails, using contextual understanding to search for landmarks
 
+## File Structure and Components
+
+The system consists of several specialized modules that work together:
+
+### Main Components
+- **solution_VLM.py**: The main agent program that contains:
+  - YOLO detection logic and movement control
+  - Initialization of the VLM agent
+  - Decision logic for switching between YOLO and VLM approaches
+  - Overall state management and action coordination
+
+- **agent_VLM.py**: Implements the landmark-based navigation logic:
+  - Buffer management for actions and observations
+  - Phase handling (search, rescue, return, placement)
+  - Processing of search results and movement outcomes
+  - Analysis of initial clues and images
+
+### Support Modules
+- **api_yoloVLM.py**: Handles all API interactions:
+  - Communication with vision-language model APIs
+  - Image encoding and formatting for API submission
+  - Response parsing and error handling
+
+- **prompt_yoloVLM.py**: Contains all prompts for VLM interactions:
+  - Initial clue analysis prompts
+  - Search prompts for different phases
+  - Movement guidance prompts
+  - Obstacle detection prompts
+
+### Interaction Flow
+1. **solution_VLM.py** receives observations and initializes components
+2. YOLO detection is attempted first to identify objects
+3. If detection succeeds, direct movement logic is applied
+4. If detection fails, control passes to **agent_VLM.py**
+5. VLM agent uses **prompt_yoloVLM.py** to formulate queries
+6. Queries are sent via **api_yoloVLM.py** to get navigation decisions
+7. Results are processed and actions are returned to the environment
+
 ## System Architecture
 
 ### Two-Tier Decision System
