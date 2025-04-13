@@ -23,7 +23,7 @@ pip install -r requirements.txt
 
 ### Step 3: Set Up Ollama
 1. Install Ollama from: https://ollama.com/download
-2. Pull the Gemma 3 model:
+2. Pull the Gemma 3 model (or other models if you need):
 ```bash
 ollama pull gemma3:27b
 ```
